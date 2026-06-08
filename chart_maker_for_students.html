@@ -1,0 +1,377 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.wrap { padding: 1rem 0; }
+
+.topic-section { margin-bottom: 1.5rem; }
+.section-label { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 10px; font-weight: 500; }
+
+.topic-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.topic-btn {
+  padding: 8px 16px; border-radius: 999px;
+  border: 1.5px solid var(--color-border-secondary);
+  background: var(--color-background-primary);
+  color: var(--color-text-secondary);
+  font-size: 14px; cursor: pointer; transition: all .15s;
+}
+.topic-btn:hover { border-color: var(--color-border-primary); color: var(--color-text-primary); }
+.topic-btn.active {
+  background: #7F77DD; border-color: #7F77DD; color: #fff; font-weight: 500;
+}
+
+.card {
+  background: var(--color-background-primary);
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-lg);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; }
+.title-row label { font-size: 13px; color: var(--color-text-secondary); white-space: nowrap; }
+#chartTitle {
+  flex: 1; font-size: 15px; font-weight: 500;
+  background: var(--color-background-secondary);
+  border: 0.5px solid var(--color-border-secondary);
+  border-radius: var(--border-radius-md);
+  padding: 6px 10px;
+  color: var(--color-text-primary);
+}
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th {
+  background: var(--color-background-secondary);
+  color: var(--color-text-secondary);
+  font-weight: 500; font-size: 12px;
+  padding: 8px 10px; text-align: left;
+  border-bottom: 0.5px solid var(--color-border-tertiary);
+}
+td { padding: 6px 6px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+td input {
+  width: 100%; padding: 6px 8px;
+  border: 0.5px solid var(--color-border-secondary);
+  border-radius: var(--border-radius-md);
+  background: var(--color-background-primary);
+  color: var(--color-text-primary);
+  font-size: 14px;
+}
+td input:focus { outline: none; border-color: #7F77DD; }
+.color-dot { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
+
+.row-actions { display: flex; gap: 6px; align-items: center; }
+.del-btn {
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 0.5px solid var(--color-border-secondary);
+  background: transparent; color: var(--color-text-secondary);
+  font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  line-height: 1;
+}
+.del-btn:hover { background: #FCEBEB; color: #E24B4A; border-color: #E24B4A; }
+
+.btn-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.add-btn {
+  padding: 7px 14px; border-radius: var(--border-radius-md);
+  border: 0.5px solid var(--color-border-secondary);
+  background: transparent; color: var(--color-text-secondary);
+  font-size: 13px; cursor: pointer;
+}
+.add-btn:hover { background: var(--color-background-secondary); }
+.draw-btn {
+  padding: 7px 20px; border-radius: var(--border-radius-md);
+  border: 0.5px solid #7F77DD;
+  background: #7F77DD; color: #fff;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+}
+.draw-btn:hover { background: #534AB7; }
+.clear-btn {
+  padding: 7px 14px; border-radius: var(--border-radius-md);
+  border: 0.5px solid var(--color-border-secondary);
+  background: transparent; color: var(--color-text-tertiary);
+  font-size: 13px; cursor: pointer; margin-left: auto;
+}
+.clear-btn:hover { background: var(--color-background-secondary); }
+
+.total-row { font-size: 12px; color: var(--color-text-secondary); margin-top: 8px; }
+.total-row span { font-weight: 500; color: var(--color-text-primary); }
+
+.chart-section { display: none; }
+.chart-section.visible { display: block; }
+
+.chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 540px) { .chart-grid { grid-template-columns: 1fr; } }
+
+.chart-title { font-size: 14px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 12px; text-align: center; }
+.source-label { font-size: 11px; color: var(--color-text-tertiary); text-align: right; margin-top: 6px; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; justify-content: center; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--color-text-secondary); }
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+.error-msg { font-size: 13px; color: #E24B4A; padding: 8px 0; }
+</style>
+
+<div class="wrap">
+  <h2 class="sr-only">학생용 그래프 만들기 앱 — 항목과 값을 입력하면 원그래프와 띠그래프가 자동으로 그려집니다.</h2>
+
+  <div class="topic-section">
+    <div class="section-label">📌 주제를 골라봐요</div>
+    <div class="topic-grid" id="topicGrid"></div>
+  </div>
+
+  <div class="card">
+    <div class="title-row">
+      <label>그래프 제목</label>
+      <input type="text" id="chartTitle" placeholder="예) 우리 반이 좋아하는 과목" />
+    </div>
+    <div class="table-wrap">
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th style="width:28px;"></th>
+            <th>항목</th>
+            <th style="width:90px;">수 / 값</th>
+            <th style="width:36px;"></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="total-row" id="totalRow">합계 <span id="totalVal">0</span></div>
+    <div class="btn-row">
+      <button class="add-btn" onclick="addRow()">+ 항목 추가</button>
+      <button class="draw-btn" onclick="drawCharts()">그래프 그리기 →</button>
+      <button class="clear-btn" onclick="resetAll()">초기화</button>
+    </div>
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+
+  <div class="chart-section" id="chartSection">
+    <div class="chart-grid">
+      <div class="card">
+        <div class="chart-title" id="pieTitle"></div>
+        <div style="position:relative; height:220px;">
+          <canvas id="pieChart" role="img" aria-label="원그래프"></canvas>
+        </div>
+        <div class="legend" id="pieLegend"></div>
+        <div class="source-label" id="pieSource"></div>
+      </div>
+      <div class="card">
+        <div class="chart-title" id="barTitle"></div>
+        <div style="position:relative; height:80px; margin-bottom: 8px;">
+          <canvas id="bandChart" role="img" aria-label="띠그래프"></canvas>
+        </div>
+        <div class="legend" id="bandLegend"></div>
+        <div class="source-label" id="barSource"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const PALETTE = ['#7F77DD','#1D9E75','#D85A30','#D4537E','#378ADD','#639922','#BA7517','#E24B4A','#888780','#5DCAA5'];
+
+const TOPICS = [
+  { label: '🍕 좋아하는 음식', items: ['피자','치킨','떡볶이','라면','초밥'], values: [10,14,8,9,7] },
+  { label: '🎮 방과후 하는 일', items: ['게임','유튜브','독서','운동','공부'], values: [12,21,5,18,8] },
+  { label: '⏰ 하루 여가 시간', items: ['1시간 미만','1~2시간','2~3시간','3~4시간','5시간 이상'], values: [6,10,10,9,8] },
+  { label: '🐾 좋아하는 동물', items: ['강아지','고양이','토끼','햄스터','물고기'], values: [16,14,8,6,5] },
+  { label: '📚 좋아하는 과목', items: ['수학','국어','체육','미술','과학'], values: [8,12,18,11,9] },
+  { label: '✏️ 직접 입력', items: ['항목1','항목2','항목3'], values: [0,0,0] },
+];
+
+let pieChartObj = null, bandChartObj = null;
+let currentColors = [...PALETTE];
+
+function buildTopics() {
+  const g = document.getElementById('topicGrid');
+  TOPICS.forEach((t, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'topic-btn';
+    btn.textContent = t.label;
+    btn.onclick = () => selectTopic(i, btn);
+    g.appendChild(btn);
+  });
+}
+
+function selectTopic(i, btn) {
+  document.querySelectorAll('.topic-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const t = TOPICS[i];
+  document.getElementById('chartTitle').value = t.label.replace(/^[^ ]+ /,'');
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  t.items.forEach((item, j) => addRow(item, t.values[j]));
+  updateTotal();
+  document.getElementById('chartSection').classList.remove('visible');
+  document.getElementById('errorMsg').textContent = '';
+}
+
+function addRow(item = '', val = '') {
+  const tbody = document.getElementById('tableBody');
+  const idx = tbody.rows.length;
+  const color = PALETTE[idx % PALETTE.length];
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><span class="color-dot" style="background:${color}"></span></td>
+    <td><input type="text" placeholder="항목 이름" value="${item}" oninput="updateTotal()" /></td>
+    <td><input type="number" min="0" placeholder="0" value="${val}" oninput="updateTotal()" /></td>
+    <td><button class="del-btn" onclick="delRow(this)" title="삭제">×</button></td>
+  `;
+  tbody.appendChild(tr);
+  updateTotal();
+}
+
+function delRow(btn) {
+  btn.closest('tr').remove();
+  rebuildColors();
+  updateTotal();
+}
+
+function rebuildColors() {
+  document.querySelectorAll('#tableBody tr').forEach((tr, i) => {
+    tr.querySelector('.color-dot').style.background = PALETTE[i % PALETTE.length];
+  });
+}
+
+function updateTotal() {
+  let sum = 0;
+  document.querySelectorAll('#tableBody tr').forEach(tr => {
+    const v = parseFloat(tr.querySelectorAll('input')[1].value) || 0;
+    sum += v;
+  });
+  document.getElementById('totalVal').textContent = Math.round(sum * 100) / 100;
+}
+
+function getData() {
+  const rows = document.querySelectorAll('#tableBody tr');
+  const labels = [], values = [], colors = [];
+  rows.forEach((tr, i) => {
+    const inputs = tr.querySelectorAll('input');
+    const label = inputs[0].value.trim() || `항목${i+1}`;
+    const val = parseFloat(inputs[1].value) || 0;
+    labels.push(label);
+    values.push(val);
+    colors.push(PALETTE[i % PALETTE.length]);
+  });
+  return { labels, values, colors };
+}
+
+function drawCharts() {
+  const { labels, values, colors } = getData();
+  const title = document.getElementById('chartTitle').value.trim() || '그래프';
+  const errEl = document.getElementById('errorMsg');
+
+  if (values.every(v => v === 0)) {
+    errEl.textContent = '숫자를 입력해야 그래프를 그릴 수 있어요!';
+    return;
+  }
+  errEl.textContent = '';
+
+  const total = values.reduce((a, b) => a + b, 0);
+  const pcts = values.map(v => parseFloat(((v / total) * 100).toFixed(1)));
+
+  document.getElementById('pieTitle').textContent = title;
+  document.getElementById('barTitle').textContent = title;
+  document.getElementById('chartSection').classList.add('visible');
+
+  if (pieChartObj) pieChartObj.destroy();
+  if (bandChartObj) bandChartObj.destroy();
+
+  pieChartObj = new Chart(document.getElementById('pieChart'), {
+    type: 'pie',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: colors,
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const pct = ((ctx.parsed / total) * 100).toFixed(1);
+              return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+
+  bandChartObj = new Chart(document.getElementById('bandChart'), {
+    type: 'bar',
+    data: {
+      labels: [''],
+      datasets: labels.map((lbl, i) => ({
+        label: lbl,
+        data: [pcts[i]],
+        backgroundColor: colors[i],
+        borderWidth: 0,
+        barPercentage: 1,
+        categoryPercentage: 1,
+      }))
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          stacked: true,
+          display: false,
+          max: 100,
+        },
+        y: { stacked: true, display: false }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.x.toFixed(1)}%`
+          }
+        }
+      }
+    }
+  });
+
+  buildLegend('pieLegend', labels, pcts, colors);
+  buildLegend('bandLegend', labels, pcts, colors);
+}
+
+function buildLegend(id, labels, pcts, colors) {
+  const el = document.getElementById(id);
+  el.innerHTML = '';
+  labels.forEach((lbl, i) => {
+    const div = document.createElement('div');
+    div.className = 'legend-item';
+    div.innerHTML = `<span class="legend-dot" style="background:${colors[i]}"></span>${lbl} ${pcts[i]}%`;
+    el.appendChild(div);
+  });
+}
+
+function resetAll() {
+  document.querySelectorAll('.topic-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('chartTitle').value = '';
+  document.getElementById('tableBody').innerHTML = '';
+  ['항목1','항목2','항목3'].forEach(() => addRow());
+  document.getElementById('chartSection').classList.remove('visible');
+  document.getElementById('errorMsg').textContent = '';
+  if (pieChartObj) { pieChartObj.destroy(); pieChartObj = null; }
+  if (bandChartObj) { bandChartObj.destroy(); bandChartObj = null; }
+}
+
+buildTopics();
+addRow('항목1', '');
+addRow('항목2', '');
+addRow('항목3', '');
+</script>
